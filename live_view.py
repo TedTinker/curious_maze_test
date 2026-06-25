@@ -186,15 +186,11 @@ class LiveView:
         else:
             self._im[key].set_data(data)
 
-    def update(self, actual_obs, predicted_obs=None, action_text="", extra_text=""):
+    def update(self, real_image, pred_image, action_text="", extra_text=""):
         """Call once per step. actual_obs / predicted_obs may each be a tensor
         or a {obs_name: tensor} dict (e.g. obs and step_dict['pred_obs_q'])."""
-        a_rgb, a_d = split_rgb_depth(to_hwc(self._pick(actual_obs)))
-        pred = self._pick(predicted_obs)
-        if pred is not None:
-            p_rgb, p_d = split_rgb_depth(to_hwc(pred))
-        else:
-            p_rgb = p_d = None
+        a_rgb, a_d = real_image[:,:,:-1], real_image[:,:,-1]
+        p_rgb, p_d = pred_image[:,:,:-1], pred_image[:,:,-1]
 
         self._draw_one("arr", a_rgb, True)
         self._draw_one("prr", p_rgb, True)

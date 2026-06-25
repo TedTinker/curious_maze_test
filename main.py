@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import torch, random
 import numpy as np
 
-os.chdir(r'C:\Users\Ted\OneDrive\Desktop\curious_maze_test')
+os.chdir(r'/home/ted/Desktop/curious_maze_test')
 
 from utils import args
 from live_view import LiveView
@@ -45,7 +45,7 @@ observation_dict = {
         'upsilon_obs' : 10,                               
         'beta_obs' : 1,                                 
         'eta_before_clamp' : 1,
-        'eta' : 0}}
+        'eta' : 2}}
 
 action_dict = {
     'make_velocity' : {
@@ -55,10 +55,10 @@ action_dict = {
             'zp_zq_sizes' : [64]},
         'decoder' : Decode_Action,
         'decoder_arg_dict' : {},
-        'target_entropy' : 2,
-        'alpha_normal' : 0,
+        'target_entropy' : 1,
+        'alpha_normal' : 1,
         'lr_alpha' : .01,
-        'initial_alpha' : .3,
+        'initial_alpha' : .5,
         'delta' : 0}}
 
 
@@ -69,8 +69,10 @@ agent = Agent(
     action_dict = action_dict,       
     hidden_state_sizes = [256],
     time_scales = [1],
+    beta_hidden = [],
     eta_before_clamp = [],
     eta = [],
+    upsilon_reward = .1,
     number_of_critics = 2, 
     tau = .1,
     lr = .001,
@@ -108,10 +110,12 @@ for i, maze_name in enumerate(args.maze_list):
                 'best_action_dict' : None,
                 'step_dict' : step_dict})
             if s > 0:
+                real_image = obs['see_image'].squeeze().squeeze()
+                pred_image = step_dict['pred_obs_q']['see_image'].squeeze().squeeze()
                 view.update(
-                    obs, step_dict['pred_obs_q'],
-                    action_text=f"Yaw: {np.random.randint(-90, 91)}.\n"
-                                f"Speed: {np.random.randint(0, 76)}.",
+                    real_image, pred_image,
+                    action_text=f"Yaw: {yaw}.\n"
+                                f"Speed: {spe}.",
                     extra_text=f"epoch {e}, step {s}.\nreward {reward + wall_punishment}.")
             if(end):
                 image, speed = maze_runner.obs()
@@ -138,7 +142,7 @@ for i, maze_name in enumerate(args.maze_list):
                     push_list[j]['done'], 
                     best_action_dict = None)
         agent.epoch(32)
-        if e % 10 == 0:
+        if e % 100 == 0:
             fig = plot_training_log(agent)
             fig.savefig("hi.png")
             plt.close(fig)
