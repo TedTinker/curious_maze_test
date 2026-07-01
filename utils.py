@@ -36,7 +36,7 @@ parser.add_argument('--default_reward',     type=literal,    default = [(1, 1)],
                     help='Extrinsic reward for choosing incorrect exit. Format: [(weight, reward), (weight, reward), ...]') 
 parser.add_argument('--better_reward',      type=literal,    default = [(1, 0), (1, 10)],
                     help='Extrinsic reward for choosing correct exit. Format: [(weight, reward), (weight, reward), ...]')
-parser.add_argument('--randomness',         type=float,      default = 0,
+parser.add_argument('--randomness',         type=float,      default = 1,
                     help='Which proportion of blocks are randomly selected to randomly change color.')
 parser.add_argument('--random_steps',       type=int,        default = 1,
                     help='How many steps an agent makes between selected blocks randomly change color.')

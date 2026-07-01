@@ -138,17 +138,19 @@ class LiveView:
         except Exception:
             pass
 
-        gs = self.fig.add_gridspec(3, 2, height_ratios=[1, 1, 0.30],
+        gs = self.fig.add_gridspec(3, 3, height_ratios=[1, 1, 0.30],
                                    hspace=0.35, wspace=0.20)
         self.ax = {
             "arr": self.fig.add_subplot(gs[0, 0]),   # actual rgb
-            "prr": self.fig.add_subplot(gs[0, 1]),   # predicted rgb
+            "prr_p": self.fig.add_subplot(gs[0, 1]),   # predicted rgb_p
+            "prr_q": self.fig.add_subplot(gs[0, 2]),   # predicted rgb_q
             "ard": self.fig.add_subplot(gs[1, 0]),   # actual depth
-            "prd": self.fig.add_subplot(gs[1, 1]),   # predicted depth
+            "prd_p": self.fig.add_subplot(gs[1, 1]),   # predicted depth_p
+            "prd_q": self.fig.add_subplot(gs[1, 2]),   # predicted depth_q
         }
         titles = {
-            "arr": "Actual  RGB",     "prr": "Predicted  RGB",
-            "ard": "Actual  depth",   "prd": "Predicted  depth",
+            "arr": "Actual RGB",     "prr_p": "Predicted RGB (Prior)",          "prr_q": "Predicted RGB (Post)",
+            "ard": "Actual depth",   "prd_p": "Predicted depth (Prior)",    "prd_q": "Predicted dept (Post)",
         }
         for k, axx in self.ax.items():
             axx.set_title(titles[k], fontsize=10)
@@ -186,19 +188,22 @@ class LiveView:
         else:
             self._im[key].set_data(data)
 
-    def update(self, real_image, pred_image, action_text="", extra_text=""):
+    def update(self, real_image, pred_image_p, pred_image_q, action_text="", extra_text=""):
         """Call once per step. actual_obs / predicted_obs may each be a tensor
         or a {obs_name: tensor} dict (e.g. obs and step_dict['pred_obs_q'])."""
         a_rgb, a_d = real_image[:,:,:-1], real_image[:,:,-1]
-        p_rgb, p_d = pred_image[:,:,:-1], pred_image[:,:,-1]
+        p_rgb, p_d = pred_image_p[:,:,:-1], pred_image_p[:,:,-1]
+        q_rgb, q_d = pred_image_q[:,:,:-1], pred_image_q[:,:,-1]
 
         self._draw_one("arr", a_rgb, True)
-        self._draw_one("prr", p_rgb, True)
+        self._draw_one("prr_p", p_rgb, True)
+        self._draw_one("prr_q", q_rgb, True)
         # Both actual and predicted obs live in [0,1] (the decoder ends with
         # (tanh + 1) / 2), so the two depth panels share one fixed 0..1 scale
         # and can be compared pixel-for-pixel.
         self._draw_one("ard", a_d, False)   # actual depth:    0..1
-        self._draw_one("prd", p_d, False)   # predicted depth: 0..1
+        self._draw_one("prd_p", p_d, False)   # predicted depth: 0..1
+        self._draw_one("prd_q", q_d, False)   # predicted depth: 0..1
 
         msg = action_text or ""
         if extra_text:

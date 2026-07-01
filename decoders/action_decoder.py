@@ -49,8 +49,7 @@ class Decode_Action(nn.Module):
         mu = nn.Sequential(
             nn.Linear(
                 in_features = 16,
-                out_features = 2),
-            nn.Tanh())
+                out_features = 2))
         
         self.mu_std = mu_std(mu, entropy = entropy)
         
@@ -74,6 +73,8 @@ class Decode_Action(nn.Module):
         episodes, steps, [hidden_state] = model_start([(hidden_state, "lin")])
         a = self.a(hidden_state)
         output, log_prob = self.mu_std(a)
+        output = torch.tanh(output) 
+        log_prob = log_prob - torch.log(1 - output**2 + 1e-6).sum(-1, keepdim=True)
         [output, log_prob] = model_end(episodes, steps, [(output, "lin"), (log_prob, "lin")])
         return(output, log_prob)
     

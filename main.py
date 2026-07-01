@@ -45,7 +45,7 @@ observation_dict = {
         'upsilon_obs' : 10,                               
         'beta_obs' : 1,                                 
         'eta_before_clamp' : 1,
-        'eta' : 2}}
+        'eta' : 5}}
 
 action_dict = {
     'make_velocity' : {
@@ -55,7 +55,7 @@ action_dict = {
             'zp_zq_sizes' : [64]},
         'decoder' : Decode_Action,
         'decoder_arg_dict' : {},
-        'target_entropy' : 1,
+        'target_entropy' : -2,
         'alpha_normal' : 1,
         'lr_alpha' : .01,
         'initial_alpha' : .5,
@@ -103,24 +103,36 @@ for i, maze_name in enumerate(args.maze_list):
             spe = action[0][0][1].item()
             reward, wall_punishment, which, end, action_name = maze_runner.action(yaw, spe)
             push_list.append(
-                {'observation_dict' : obs, 
-                'action_dict' : step_dict['action'], 
-                'reward' : reward + wall_punishment, 
-                'done' : end, 
+                {'observation_dict' : obs,
+                'action_dict' : step_dict['action'],
+                'reward' : reward + wall_punishment,
+                'done' : end,
                 'best_action_dict' : None,
                 'step_dict' : step_dict})
-            if s > 0:
-                real_image = obs['see_image'].squeeze().squeeze()
-                pred_image = step_dict['pred_obs_q']['see_image'].squeeze().squeeze()
-                view.update(
-                    real_image, pred_image,
-                    action_text=f"Yaw: {yaw}.\n"
-                                f"Speed: {spe}.",
-                    extra_text=f"epoch {e}, step {s}.\nreward {reward + wall_punishment}.")
+
+            # The action is applied, so the world is now AT the observation that
+            # step_dict's predictions were predicting. Fetch it and compare.
+            next_image, next_speed = maze_runner.obs()
+            next_image = next_image.unsqueeze(1)
+            next_obs = {'see_image' : next_image}
+            final_obs = next_obs   # serves as the last transition's next-obs
+
+            real_image   = next_obs['see_image'].squeeze().squeeze()
+            pred_image_p = step_dict['pred_obs_p']['see_image'].squeeze().squeeze()
+            pred_image_q = step_dict['pred_obs_q']['see_image'].squeeze().squeeze()
+            yaw_str = str(round(yaw,2))
+            spe_str = str(round(spe,2))
+            if yaw >= 0:
+                yaw_str = " " + yaw_str
+            if spe >= 0:
+                spe_str = " " + spe_str
+            view.update(
+                real_image, pred_image_p, pred_image_q,
+                action_text=f"Yaw:   {yaw_str}.\n"
+                            f"Speed: {spe_str}.",
+                extra_text=f"epoch {e}, step {s}.\nreward {reward + wall_punishment}.")
+
             if(end):
-                image, speed = maze_runner.obs()
-                image = image.unsqueeze(1)
-                final_obs = {'see_image' : image}
                 maze_runner.begin()
                 break
         for j in range(len(push_list)):
