@@ -43,9 +43,9 @@ observation_dict = {
         'decoder' : Decode_Image,
         'decoder_arg_dict' : {},
         'upsilon_obs' : 10,                               
-        'beta_obs' : 1,                                 
+        'beta_obs' : .5,                                 
         'eta_before_clamp' : 1,
-        'eta' : 5}}
+        'eta' : 0}} # 2
 
 action_dict = {
     'make_velocity' : {
